@@ -30,6 +30,7 @@ const mkdirp = require('mkdirp');
     newScrollTop: 720,
     scrollStep: 500
   };
+
   while (scroll.oldScrollTop !== scroll.newScrollTop) {
     scroll = await page.evaluate((scroll) => {
       scroll.oldScrollTop = document.scrollingElement.scrollTop;
@@ -51,9 +52,25 @@ const mkdirp = require('mkdirp');
     });
   });
   
+  // 失败链接收集
+
+  let lostUrlList = [];
+
   // 访问链接
 
   for (let url of urlList) {
+    saveToPDF(url);
+  }
+
+  if (lostUrlList.length) {
+    for (let url of lostUrlList) {
+      saveToPDF(url);
+    }
+  }
+
+  // 保存至pdf
+
+  let saveToPDF = function(url) {
     try {
       const contentPage = await browser.newPage();
       contentPage.setViewport({
@@ -75,10 +92,11 @@ const mkdirp = require('mkdirp');
       console.log(`完成${title}`);
       await contentPage.close();
     } catch (e) {
-      console.log(JSON.stringify(e));
+      let errString = JSON.stringify(e);
+      console.log(`${errString}-${url}`);
+      lostUrlList.push(url);
     }
   }
-
 
   await browser.close();
 })();
